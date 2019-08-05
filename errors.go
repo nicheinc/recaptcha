@@ -3,7 +3,19 @@ package recaptcha
 import (
 	"fmt"
 	"strings"
+	"time"
 )
+
+type VerificationError struct {
+	ErrorCodes []string
+}
+
+func (e *VerificationError) Error() string {
+	if len(e.ErrorCodes) > 0 {
+		return fmt.Sprintf("failed verification: %s", strings.Join(e.ErrorCodes, ","))
+	}
+	return "failed verification"
+}
 
 type InvalidHostnameError struct {
 	Expected string
@@ -32,13 +44,12 @@ func (e *InvalidScoreError) Error() string {
 	return fmt.Sprintf("invalid score: %f, minimum threshold: %f", e.Actual, e.Threshold)
 }
 
-type VerificationError struct {
-	ErrorCodes []string
+type InvalidChallengeTsError struct {
+	ChallengeTs time.Time
+	Window      time.Duration
+	Actual      time.Duration
 }
 
-func (e *VerificationError) Error() string {
-	if len(e.ErrorCodes) > 0 {
-		return fmt.Sprintf("failed verification: %s", strings.Join(e.ErrorCodes, ","))
-	}
-	return "failed verification"
+func (e *InvalidChallengeTsError) Error() string {
+	return fmt.Sprintf("invalid challenge timestamp: %s (%s old), maximum window: %s", e.ChallengeTs, e.Actual, e.Window)
 }

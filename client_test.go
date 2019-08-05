@@ -197,12 +197,12 @@ func TestFetch(t *testing.T) {
 			token:  "token",
 			userIP: "192.169.0.1",
 			expected: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 		},
 	}
@@ -221,6 +221,12 @@ func TestFetch(t *testing.T) {
 }
 
 func TestVerify(t *testing.T) {
+	// Mock time.Now() function for sake of ChallengeTs tests
+	current := time.Now()
+	now = func() time.Time {
+		return current
+	}
+
 	testCases := []struct {
 		name     string
 		response Response
@@ -230,24 +236,24 @@ func TestVerify(t *testing.T) {
 		{
 			name: "VerificationError/SuccessFalse",
 			response: Response{
-				Success:            false,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         nil,
+				Success:     false,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  nil,
 			},
 			expected: &VerificationError{},
 		},
 		{
 			name: "VerificationError/ErrorCodes",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{"invalid-input-secret"},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{"invalid-input-secret"},
 			},
 			expected: &VerificationError{
 				ErrorCodes: []string{"invalid-input-secret"},
@@ -256,12 +262,12 @@ func TestVerify(t *testing.T) {
 		{
 			name: "InvalidHostnameError",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "nathanjcochran.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "nathanjcochran.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Hostname("niche.com"),
@@ -274,12 +280,12 @@ func TestVerify(t *testing.T) {
 		{
 			name: "InvalidActionError",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "register",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "register",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Action("login"),
@@ -292,12 +298,12 @@ func TestVerify(t *testing.T) {
 		{
 			name: "InvalidScoreError",
 			response: Response{
-				Success:            true,
-				Score:              .4,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .4,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Score(.5),
@@ -308,26 +314,45 @@ func TestVerify(t *testing.T) {
 			},
 		},
 		{
+			name: "InvalidChallengeTsError",
+			response: Response{
+				Success:     true,
+				Score:       .4,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
+			},
+			criteria: []Criterion{
+				Window(500 * time.Millisecond),
+			},
+			expected: &InvalidChallengeTsError{
+				ChallengeTs: now().Add(-time.Second),
+				Window:      500 * time.Millisecond,
+				Actual:      time.Second,
+			},
+		},
+		{
 			name: "Success",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			expected: nil,
 		},
 		{
 			name: "Success/Hostname",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Hostname("niche.com"),
@@ -337,12 +362,12 @@ func TestVerify(t *testing.T) {
 		{
 			name: "Success/Action",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Action("login"),
@@ -352,12 +377,12 @@ func TestVerify(t *testing.T) {
 		{
 			name: "Success/Score",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Score(.5),
@@ -365,19 +390,35 @@ func TestVerify(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name: "Success/ChallengeTs",
+			response: Response{
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
+			},
+			criteria: []Criterion{
+				Window(time.Second),
+			},
+			expected: nil,
+		},
+		{
 			name: "Success/AllOptions",
 			response: Response{
-				Success:            true,
-				Score:              .5,
-				Action:             "login",
-				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
-				Hostname:           "niche.com",
-				ErrorCodes:         []string{},
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
 				Hostname("niche.com"),
 				Action("login"),
 				Score(.5),
+				Window(time.Second),
 			},
 			expected: nil,
 		},

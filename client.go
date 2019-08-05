@@ -104,12 +104,12 @@ func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, err
 // Response represents a response from the reCAPTCHA token verification
 // endpoint. The validity of the token can be verified via the Verify method.
 type Response struct {
-	Success            bool      `json:"success"`
-	Score              float64   `json:"score"`
-	Action             string    `json:"action"`
-	ChallengeTimestamp time.Time `json:"challenge_ts"`
-	Hostname           string    `json:"hostname"`
-	ErrorCodes         []string  `json:"error-codes"`
+	Success     bool      `json:"success"`
+	Score       float64   `json:"score"`
+	Action      string    `json:"action"`
+	ChallengeTs time.Time `json:"challenge_ts"`
+	Hostname    string    `json:"hostname"`
+	ErrorCodes  []string  `json:"error-codes"`
 }
 
 // Verify checks whether or not the response represents a valid token. It will
@@ -176,6 +176,29 @@ func Score(threshold float64) Criterion {
 			return &InvalidScoreError{
 				Threshold: threshold,
 				Actual:    r.Score,
+			}
+		}
+		return nil
+	}
+}
+
+// Makes it possible to mock time.Now() calls
+var now = time.Now
+
+// Window is an optional verification criterion which ensures that the response
+// token is being used within the specified window from the time that the
+// reCAPTCHA was presented. By default, the reCAPTCHA verification endpoint
+// only considers a token valid for 2 minutes, so this method is only necessary
+// if you want to enforce an narrower window than that. Returns
+// *InvalidChallengeTsError if the challenge timestamp is outside the valid
+// window.
+func Window(window time.Duration) Criterion {
+	return func(r *Response) error {
+		if diff := now().Sub(r.ChallengeTs); diff > window {
+			return &InvalidChallengeTsError{
+				ChallengeTs: r.ChallengeTs,
+				Window:      window,
+				Actual:      diff,
 			}
 		}
 		return nil
