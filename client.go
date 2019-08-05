@@ -80,6 +80,7 @@ func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, err
 	if err != nil {
 		return Response{}, xerrors.Errorf("error creating POST request: %w", err)
 	}
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request = request.WithContext(ctx)
 
 	res, err := c.client.Do(request)
