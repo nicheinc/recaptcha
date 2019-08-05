@@ -273,8 +273,7 @@ func TestVerify(t *testing.T) {
 				Hostname("niche.com"),
 			},
 			expected: &InvalidHostnameError{
-				Expected: "niche.com",
-				Actual:   "nathanjcochran.com",
+				Hostname: "nathanjcochran.com",
 			},
 		},
 		{
@@ -291,8 +290,7 @@ func TestVerify(t *testing.T) {
 				Action("login"),
 			},
 			expected: &InvalidActionError{
-				Expected: "login",
-				Actual:   "register",
+				Action: "register",
 			},
 		},
 		{
@@ -309,8 +307,7 @@ func TestVerify(t *testing.T) {
 				Score(.5),
 			},
 			expected: &InvalidScoreError{
-				Threshold: .5,
-				Actual:    .4,
+				Score: .4,
 			},
 		},
 		{
@@ -324,12 +321,10 @@ func TestVerify(t *testing.T) {
 				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
-				Window(500 * time.Millisecond),
+				ChallengeTs(500 * time.Millisecond),
 			},
 			expected: &InvalidChallengeTsError{
 				ChallengeTs: now().Add(-time.Second),
-				Window:      500 * time.Millisecond,
-				Actual:      time.Second,
 			},
 		},
 		{
@@ -400,7 +395,7 @@ func TestVerify(t *testing.T) {
 				ErrorCodes:  []string{},
 			},
 			criteria: []Criterion{
-				Window(time.Second),
+				ChallengeTs(time.Second),
 			},
 			expected: nil,
 		},
@@ -418,7 +413,7 @@ func TestVerify(t *testing.T) {
 				Hostname("niche.com"),
 				Action("login"),
 				Score(.5),
-				Window(time.Second),
+				ChallengeTs(time.Second),
 			},
 			expected: nil,
 		},

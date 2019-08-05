@@ -1,3 +1,13 @@
+// Package recaptcha provides functionality for hitting the reCAPTCHA v3
+// verification endpoint and verifying the response. By default, it simply
+// verifies that the response's "success" field is true, and that the
+// "error-codes" field is empty. Additional optional verification criteria can
+// be provided when calling Verify to ensure, for example, that the correct
+// hostname and action were returned. See the package-level example for a
+// demonstration of how to use the package.
+//
+// More information about reCAPTCHA v3 can be found here:
+// https://developers.google.com/recaptcha/docs/v3
 package recaptcha
 
 import (
@@ -14,8 +24,8 @@ import (
 
 const DefaultURL = "https://www.google.com/recaptcha/api/siteverify"
 
-// HTTPClient is a basic interface for an HTTP client, as required by this
-// library. The standard *http.Client satisfies this interface.
+// HTTPClient is a basic interface for an HTTP client, as required by the
+// SetHTTPClient function. The standard *http.Client satisfies this interface.
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -29,10 +39,10 @@ type Client struct {
 }
 
 // Option represents a configuration option that can be applied when creating a
-// Client via the NewClient method.
+// Client via the NewClient method. See SetHTTPClient and SetURL functions.
 type Option func(c *Client)
 
-// SetHTTPClient is an option for creating a Client with a custom http.Client.
+// SetHTTPClient is an option for creating a Client with a custom *http.Client.
 // If not provided, the Client will use http.DefaultClient.
 func SetHTTPClient(client HTTPClient) Option {
 	return func(c *Client) {
@@ -49,8 +59,9 @@ func SetURL(url string) Option {
 }
 
 // Creates an instance of Client, which is thread-safe and should be reused
-// instead of created as needed. You must provided your secret key, which is
-// shared between your site and reCAPTCHA.
+// instead of created as needed. You must provided your website's secret key,
+// which is shared between your site and reCAPTCHA. Additional configuration
+// options may also be provided (e.g. SetHTTPClient, SetURL).
 func NewClient(secret string, opts ...Option) *Client {
 	client := &Client{
 		secret: secret,
@@ -113,11 +124,11 @@ type Response struct {
 	ErrorCodes  []string  `json:"error-codes"`
 }
 
-// Verify checks whether or not the response represents a valid token. It will
-// return a *VerificationError if the response's "success" field is false, or
-// if the "error-codes" field is non-empty. Further optional verification
-// criteria may be provided, in which case their respective errors may be
-// returned as well.
+// Verify checks whether the response represents a valid token. It returns an
+// error if the token is invalid (i.e. if Success is false or ErrorCodes is
+// non-empty). Typically, the error will be of type *VerificationError.
+// However, if additional optional verification criteria are provided, their
+// respective error types may be returned as well.
 func (r *Response) Verify(criteria ...Criterion) error {
 	if !r.Success || len(r.ErrorCodes) > 0 {
 		return &VerificationError{
@@ -145,8 +156,7 @@ func Hostname(hostname string) Criterion {
 	return func(r *Response) error {
 		if r.Hostname != hostname {
 			return &InvalidHostnameError{
-				Expected: hostname,
-				Actual:   r.Hostname,
+				Hostname: r.Hostname,
 			}
 		}
 		return nil
@@ -160,8 +170,7 @@ func Action(action string) Criterion {
 	return func(r *Response) error {
 		if r.Action != action {
 			return &InvalidActionError{
-				Expected: action,
-				Actual:   r.Action,
+				Action: r.Action,
 			}
 		}
 		return nil
@@ -169,14 +178,13 @@ func Action(action string) Criterion {
 }
 
 // Score is an optional verification criterion which ensures that the score
-// associated with the reCAPTCHA meets a minimum threshold. Returns
+// associated with the reCAPTCHA meets the minimum threshold. Returns
 // *InvalidScoreError if the score is below the threshold.
 func Score(threshold float64) Criterion {
 	return func(r *Response) error {
 		if r.Score < threshold {
 			return &InvalidScoreError{
-				Threshold: threshold,
-				Actual:    r.Score,
+				Score: r.Score,
 			}
 		}
 		return nil
@@ -186,20 +194,18 @@ func Score(threshold float64) Criterion {
 // Makes it possible to mock time.Now() calls
 var now = time.Now
 
-// Window is an optional verification criterion which ensures that the response
-// token is being used within the specified window from the time that the
-// reCAPTCHA was presented. By default, the reCAPTCHA verification endpoint
+// ChallengeTs is an optional verification criterion which ensures that the
+// response token is being used within the specified window of time from when
+// the reCAPTCHA was presented. By default, the reCAPTCHA verification endpoint
 // only considers a token valid for 2 minutes, so this method is only necessary
 // if you want to enforce an narrower window than that. Returns
 // *InvalidChallengeTsError if the challenge timestamp is outside the valid
 // window.
-func Window(window time.Duration) Criterion {
+func ChallengeTs(window time.Duration) Criterion {
 	return func(r *Response) error {
 		if diff := now().Sub(r.ChallengeTs); diff > window {
 			return &InvalidChallengeTsError{
 				ChallengeTs: r.ChallengeTs,
-				Window:      window,
-				Actual:      diff,
 			}
 		}
 		return nil
