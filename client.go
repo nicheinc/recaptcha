@@ -6,18 +6,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
 )
 
-const verifyURL = "https://www.google.com/recaptcha/api/siteverify"
+const DefaultURL = "https://www.google.com/recaptcha/api/siteverify"
+
+// HTTPClient is a basic interface for an HTTP client, as required by this
+// library. The standard *http.Client satisfies this interface.
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 // Client for making requests to the reCAPTCHA verification endpoint and
 // receiving token verification responses. Created with NewClient.
 type Client struct {
 	secret string
-	client *http.Client
+	url    string
+	client HTTPClient
 }
 
 // ClientOption represents a configuration option that can be applied when
@@ -26,9 +34,17 @@ type ClientOption func(c *Client)
 
 // SetHTTPClient is an option for creating a Client with a custom http.Client.
 // If not provided, the Client will use http.DefaultClient.
-func SetHTTPClient(client *http.Client) ClientOption {
+func SetHTTPClient(client HTTPClient) ClientOption {
 	return func(c *Client) {
 		c.client = client
+	}
+}
+
+// SetURL is an option for creating a Client that hits a custom verification
+// URL. If not provided, the Client will use DefaultURL.
+func SetURL(url string) ClientOption {
+	return func(c *Client) {
+		c.url = url
 	}
 }
 
@@ -38,6 +54,7 @@ func SetHTTPClient(client *http.Client) ClientOption {
 func NewClient(secret string, opts ...ClientOption) *Client {
 	client := &Client{
 		secret: secret,
+		url:    DefaultURL,
 		client: http.DefaultClient,
 	}
 	for _, opt := range opts {
@@ -59,9 +76,15 @@ func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, err
 		values["remoteIP"] = []string{userIP}
 	}
 
-	res, err := c.client.PostForm(verifyURL, values)
+	request, err := http.NewRequest(http.MethodPost, c.url, strings.NewReader(values.Encode()))
 	if err != nil {
-		return Response{}, xerrors.Errorf("error making POST request", err)
+		return Response{}, xerrors.Errorf("error creating POST request: %w", err)
+	}
+	request = request.WithContext(ctx)
+
+	res, err := c.client.Do(request)
+	if err != nil {
+		return Response{}, xerrors.Errorf("error making POST request: %w", err)
 	}
 	defer res.Body.Close()
 
