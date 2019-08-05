@@ -28,13 +28,13 @@ type Client struct {
 	client HTTPClient
 }
 
-// ClientOption represents a configuration option that can be applied when
-// creating a Client via the NewClient method.
-type ClientOption func(c *Client)
+// Option represents a configuration option that can be applied when creating a
+// Client via the NewClient method.
+type Option func(c *Client)
 
 // SetHTTPClient is an option for creating a Client with a custom http.Client.
 // If not provided, the Client will use http.DefaultClient.
-func SetHTTPClient(client HTTPClient) ClientOption {
+func SetHTTPClient(client HTTPClient) Option {
 	return func(c *Client) {
 		c.client = client
 	}
@@ -42,7 +42,7 @@ func SetHTTPClient(client HTTPClient) ClientOption {
 
 // SetURL is an option for creating a Client that hits a custom verification
 // URL. If not provided, the Client will use DefaultURL.
-func SetURL(url string) ClientOption {
+func SetURL(url string) Option {
 	return func(c *Client) {
 		c.url = url
 	}
@@ -51,7 +51,7 @@ func SetURL(url string) ClientOption {
 // Creates an instance of Client, which is thread-safe and should be reused
 // instead of created as needed. You must provided your secret key, which is
 // shared between your site and reCAPTCHA.
-func NewClient(secret string, opts ...ClientOption) *Client {
+func NewClient(secret string, opts ...Option) *Client {
 	client := &Client{
 		secret: secret,
 		url:    DefaultURL,
@@ -64,9 +64,9 @@ func NewClient(secret string, opts ...ClientOption) *Client {
 }
 
 // Fetch makes a request to the reCAPTCHA verification endpoint using the
-// provided token and optional userIP (which can be omitted from the request
-// by providing an empty string), and returns the response. To check whether
-// the token was actually valid, use the response's Verify method.
+// provided token and optional userIP (which can be omitted from the request by
+// providing an empty string), and returns the response. To check whether the
+// token was actually valid, use the response's Verify method.
 func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, error) {
 	values := url.Values{
 		"secret":   {c.secret},
@@ -112,20 +112,20 @@ type Response struct {
 	ErrorCodes         []string  `json:"error-codes"`
 }
 
-// Verify checks whether or not the response represents a valid token. It
-// will return a *VerificationError if the response's "success" field is false,
-// or if the "error-codes" field is non-empty. Further optional verification
+// Verify checks whether or not the response represents a valid token. It will
+// return a *VerificationError if the response's "success" field is false, or
+// if the "error-codes" field is non-empty. Further optional verification
 // criteria may be provided, in which case their respective errors may be
 // returned as well.
-func (r *Response) Verify(opts ...VerifyOption) error {
+func (r *Response) Verify(criteria ...Criterion) error {
 	if !r.Success || len(r.ErrorCodes) > 0 {
 		return &VerificationError{
 			ErrorCodes: r.ErrorCodes,
 		}
 	}
 
-	for _, opt := range opts {
-		if err := opt(r); err != nil {
+	for _, criterion := range criteria {
+		if err := criterion(r); err != nil {
 			return err
 		}
 	}
@@ -133,14 +133,14 @@ func (r *Response) Verify(opts ...VerifyOption) error {
 	return nil
 }
 
-// VerifyOption is an optional token verification criteria that can be applied
+// Criterion is an optional token verification criterion that can be applied
 // when a token is verified via the Verify method.
-type VerifyOption func(r *Response) error
+type Criterion func(r *Response) error
 
-// Hostname is an optional verification criteria which ensures that the
+// Hostname is an optional verification criterion which ensures that the
 // hostname of the website where the reCAPTCHA was presented is the expected
 // one. Returns *InvalidHostnameError if the hostname is not correct.
-func Hostname(hostname string) VerifyOption {
+func Hostname(hostname string) Criterion {
 	return func(r *Response) error {
 		if r.Hostname != hostname {
 			return &InvalidHostnameError{
@@ -152,13 +152,13 @@ func Hostname(hostname string) VerifyOption {
 	}
 }
 
-// Action is an optional verification criteria which ensures that the website
+// Action is an optional verification criterion which ensures that the website
 // action associated with the reCAPTCHA is the expected one. Returns
 // *InvalidActionError if the action is not correct.
-func Action(action string) VerifyOption {
+func Action(action string) Criterion {
 	return func(r *Response) error {
 		if r.Action != action {
-			return &InvalidHostnameError{
+			return &InvalidActionError{
 				Expected: action,
 				Actual:   r.Action,
 			}
@@ -167,10 +167,10 @@ func Action(action string) VerifyOption {
 	}
 }
 
-// Score is an optional verification criteria which ensures that the score
+// Score is an optional verification criterion which ensures that the score
 // associated with the reCAPTCHA meets a minimum threshold. Returns
 // *InvalidScoreError if the score is below the threshold.
-func Score(threshold float64) VerifyOption {
+func Score(threshold float64) Criterion {
 	return func(r *Response) error {
 		if r.Score < threshold {
 			return &InvalidScoreError{

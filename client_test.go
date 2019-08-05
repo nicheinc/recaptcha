@@ -40,7 +40,7 @@ func TestNewClient(t *testing.T) {
 	testCases := []struct {
 		name     string
 		secret   string
-		options  []ClientOption
+		options  []Option
 		expected *Client
 	}{
 		{
@@ -55,7 +55,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name:   "SetHTTPClient",
 			secret: "secret",
-			options: []ClientOption{
+			options: []Option{
 				SetHTTPClient(&http.Client{
 					Transport: &http.Transport{
 						MaxIdleConnsPerHost: 1,
@@ -75,7 +75,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name:   "SetURL",
 			secret: "secret",
-			options: []ClientOption{
+			options: []Option{
 				SetURL("url"),
 			},
 			expected: &Client{
@@ -90,7 +90,7 @@ func TestNewClient(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			actual := NewClient(testCase.secret, testCase.options...)
 			if !reflect.DeepEqual(testCase.expected, actual) {
-				t.Errorf("expected: %v, actual: %v", testCase.expected, actual)
+				t.Errorf("Expected:\n%#v\nActual:\n%v\n", testCase.expected, actual)
 			}
 		})
 	}
@@ -106,7 +106,7 @@ func TestFetch(t *testing.T) {
 		err      error
 	}{
 		{
-			name: "NewRequestError",
+			name: "NewRequest/Error",
 			client: NewClient("secret",
 				SetURL("\x7f"),
 			),
@@ -119,7 +119,7 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			name: "DoError",
+			name: "Do/Error",
 			client: NewClient("secret",
 				SetHTTPClient(&httpClientMock{
 					doStub: func(req *http.Request) (*http.Response, error) {
@@ -132,7 +132,7 @@ func TestFetch(t *testing.T) {
 			err:    errors.New("AAHHH"),
 		},
 		{
-			name: "ReadAllError",
+			name: "ReadAll/Error",
 			client: NewClient("secret",
 				SetHTTPClient(&httpClientMock{
 					doStub: func(req *http.Request) (*http.Response, error) {
@@ -154,7 +154,7 @@ func TestFetch(t *testing.T) {
 			err:    errors.New("AAHHH"),
 		},
 		{
-			name: "UnmarshalError",
+			name: "Unmarshal/Error",
 			client: NewClient("secret",
 				SetHTTPClient(&httpClientMock{
 					doStub: func(req *http.Request) (*http.Response, error) {
@@ -212,9 +212,182 @@ func TestFetch(t *testing.T) {
 			actual, err := testCase.client.Fetch(context.Background(), testCase.token, testCase.userIP)
 			err = xerrors.Unwrap(err)
 			if !reflect.DeepEqual(testCase.expected, actual) {
-				t.Errorf("expected:\n%#v\nactual:\n%#v\n", testCase.expected, actual)
+				t.Errorf("Expected:\n%#v\nActual:\n%#v\n", testCase.expected, actual)
 			} else if !reflect.DeepEqual(testCase.err, err) {
-				t.Errorf("expected err:\n%#v\nactual:\n%#v\n", testCase.err, err)
+				t.Errorf("Expected error:\n%#v\nActual:\n%#v\n", testCase.err, err)
+			}
+		})
+	}
+}
+
+func TestVerify(t *testing.T) {
+	testCases := []struct {
+		name     string
+		response Response
+		criteria []Criterion
+		expected error
+	}{
+		{
+			name: "VerificationError/SuccessFalse",
+			response: Response{
+				Success:            false,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         nil,
+			},
+			expected: &VerificationError{},
+		},
+		{
+			name: "VerificationError/ErrorCodes",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{"invalid-input-secret"},
+			},
+			expected: &VerificationError{
+				ErrorCodes: []string{"invalid-input-secret"},
+			},
+		},
+		{
+			name: "InvalidHostnameError",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "nathanjcochran.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Hostname("niche.com"),
+			},
+			expected: &InvalidHostnameError{
+				Expected: "niche.com",
+				Actual:   "nathanjcochran.com",
+			},
+		},
+		{
+			name: "InvalidActionError",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "register",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Action("login"),
+			},
+			expected: &InvalidActionError{
+				Expected: "login",
+				Actual:   "register",
+			},
+		},
+		{
+			name: "InvalidScoreError",
+			response: Response{
+				Success:            true,
+				Score:              .4,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Score(.5),
+			},
+			expected: &InvalidScoreError{
+				Threshold: .5,
+				Actual:    .4,
+			},
+		},
+		{
+			name: "Success",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			expected: nil,
+		},
+		{
+			name: "Success/Hostname",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Hostname("niche.com"),
+			},
+			expected: nil,
+		},
+		{
+			name: "Success/Action",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Action("login"),
+			},
+			expected: nil,
+		},
+		{
+			name: "Success/Score",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Score(.5),
+			},
+			expected: nil,
+		},
+		{
+			name: "Success/AllOptions",
+			response: Response{
+				Success:            true,
+				Score:              .5,
+				Action:             "login",
+				ChallengeTimestamp: time.Date(2019, 8, 25, 16, 20, 0, 0, time.UTC),
+				Hostname:           "niche.com",
+				ErrorCodes:         []string{},
+			},
+			criteria: []Criterion{
+				Hostname("niche.com"),
+				Action("login"),
+				Score(.5),
+			},
+			expected: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			actual := testCase.response.Verify(testCase.criteria...)
+			if !reflect.DeepEqual(testCase.expected, actual) {
+				t.Errorf("Expected:\n%#v\nActual:\n%#v\n", testCase.expected, actual)
 			}
 		})
 	}
