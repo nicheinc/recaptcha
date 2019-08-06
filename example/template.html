@@ -1,0 +1,26 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>reCAPTCHA Example</title>
+</head>
+
+<body>
+  <script src="https://www.google.com/recaptcha/api.js"></script>
+  <script>
+    function onSubmit() {
+      document.getElementById('form').submit();
+    }
+  </script>
+
+  <form id="form" action="/submit" method="POST">
+  <fieldset>
+    <legend>Form</legend>
+    <button class="g-recaptcha"
+            data-sitekey="{{.SiteKey}}"
+            data-callback="onSubmit">Submit</button>
+  </fieldset>
+</form>
+</body>
+</html>
