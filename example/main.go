@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -16,7 +17,9 @@ import (
 var (
 	secretKey = flag.String("secret-key", "", "reCAPTCHA secret key")
 	siteKey   = flag.String("site-key", "", "reCAPTCHA site key")
-	action    = flag.String("action", "", "reCAPTCHA action")
+	hostname  = flag.String("hostname", "localhost", "expected hostname")
+	action    = flag.String("action", "example", "expected action")
+	score     = flag.Float64("score", 0.5, "minimum score threshold")
 
 	client *recaptcha.Client
 )
@@ -95,8 +98,26 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write(out); err != nil {
+		http.Error(w,
+			fmt.Sprintf("Error writing response: %s\n", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	var message string
+	if err := response.Verify(
+		recaptcha.Hostname(*hostname),
+		recaptcha.Action(*action),
+		recaptcha.Score(*score),
+	); err != nil {
+		message = fmt.Sprintf("\n\nToken is invalid: %s", err)
+	} else {
+		message = fmt.Sprintf("\n\nToken is valid")
+	}
+
+	if _, err := io.WriteString(w, message); err != nil {
 		http.Error(w,
 			fmt.Sprintf("Error writing response: %s\n", err),
 			http.StatusInternalServerError,
