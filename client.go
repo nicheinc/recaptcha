@@ -84,7 +84,7 @@ func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, err
 		"response": {token},
 	}
 	if userIP != "" {
-		values["remoteIP"] = []string{userIP}
+		values["remoteip"] = []string{userIP}
 	}
 
 	request, err := http.NewRequest(http.MethodPost, c.url, strings.NewReader(values.Encode()))

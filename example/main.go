@@ -6,6 +6,7 @@ import (
 	"flag"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/nicheinc/recaptcha"
@@ -59,9 +60,12 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	if token == "" {
 		log.Fatalln("Form submission missing g-recaptcha-response")
 	}
-	// userIP := ?
+	userIP, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		log.Fatalf("Error parsing remote addr: %s", err)
+	}
 
-	response, err := client.Fetch(context.Background(), token, "")
+	response, err := client.Fetch(context.Background(), token, userIP)
 	if err != nil {
 		log.Fatalf("Error making request to token verification endpoint: %s", err)
 	}
