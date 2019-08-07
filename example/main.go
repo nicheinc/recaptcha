@@ -20,6 +20,7 @@ var (
 	hostname  = flag.String("hostname", "localhost", "expected hostname")
 	action    = flag.String("action", "example", "expected action")
 	score     = flag.Float64("score", 0.5, "minimum score threshold")
+	port      = flag.Int("port", 80, "Port to run example server on")
 
 	client *recaptcha.Client
 )
@@ -31,7 +32,7 @@ func main() {
 
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/submit", submitHandler)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
 		log.Fatalf("Error serving requests: %s\n", err)
 	}
 }
