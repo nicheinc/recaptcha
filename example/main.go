@@ -63,9 +63,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
-	token := r.FormValue("g-recaptcha-response")
+	token := r.FormValue("token")
 	if token == "" {
-		http.Error(w, "Form submission missing g-recaptcha-response parameter", http.StatusBadRequest)
+		http.Error(w, "Form submission missing 'token' parameter", http.StatusBadRequest)
 		return
 	}
 	userIP, _, err := net.SplitHostPort(r.RemoteAddr)
