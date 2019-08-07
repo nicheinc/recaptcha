@@ -19,19 +19,12 @@ var (
 	action    = flag.String("action", "", "reCAPTCHA action")
 
 	client *recaptcha.Client
-	tmpl   *template.Template
 )
 
 func main() {
 	flag.Parse()
 
 	client = recaptcha.NewClient(*secretKey)
-
-	var err error
-	tmpl, err = template.New("template.html").ParseFiles("./template.html")
-	if err != nil {
-		log.Fatalf("Error parsing html template: %s\n", err)
-	}
 
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/submit", submitHandler)
@@ -51,8 +44,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Action:  *action,
 	}
 
+	tmpl, err := template.New("template.html").ParseFiles("./template.html")
+	if err != nil {
+		http.Error(w,
+			fmt.Sprintf("Error parsing html template: %s\n", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
 	if err := tmpl.Execute(w, data); err != nil {
-		http.Error(w, fmt.Sprintf("Error executing template: %s", err), http.StatusInternalServerError)
+		http.Error(w,
+			fmt.Sprintf("Error executing template: %s", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 }
