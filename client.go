@@ -32,28 +32,33 @@ type HTTPClient interface {
 
 // Client for making requests to the reCAPTCHA verification endpoint and
 // receiving token verification responses. Created with NewClient.
-type Client struct {
-	secret string
-	url    string
-	client HTTPClient
+type Client interface {
+	Fetch(ctx context.Context, token, userIP string) (Response, error)
+}
+
+// Concrete implementation of the Client interface. Created with NewClient.
+type client struct {
+	secret     string
+	url        string
+	httpClient HTTPClient
 }
 
 // Option represents a configuration option that can be applied when creating a
 // Client via the NewClient method. See SetHTTPClient and SetURL functions.
-type Option func(c *Client)
+type Option func(c *client)
 
 // SetHTTPClient is an option for creating a Client with a custom *http.Client.
 // If not provided, the Client will use http.DefaultClient.
-func SetHTTPClient(client HTTPClient) Option {
-	return func(c *Client) {
-		c.client = client
+func SetHTTPClient(httpClient HTTPClient) Option {
+	return func(c *client) {
+		c.httpClient = httpClient
 	}
 }
 
 // SetURL is an option for creating a Client that hits a custom verification
 // URL. If not provided, the Client will use DefaultURL.
 func SetURL(url string) Option {
-	return func(c *Client) {
+	return func(c *client) {
 		c.url = url
 	}
 }
@@ -62,11 +67,11 @@ func SetURL(url string) Option {
 // instead of created as needed. You must provided your website's secret key,
 // which is shared between your site and reCAPTCHA. Additional configuration
 // options may also be provided (e.g. SetHTTPClient, SetURL).
-func NewClient(secret string, opts ...Option) *Client {
-	client := &Client{
-		secret: secret,
-		url:    DefaultURL,
-		client: http.DefaultClient,
+func NewClient(secret string, opts ...Option) Client {
+	client := &client{
+		secret:     secret,
+		url:        DefaultURL,
+		httpClient: http.DefaultClient,
 	}
 	for _, opt := range opts {
 		opt(client)
@@ -78,7 +83,7 @@ func NewClient(secret string, opts ...Option) *Client {
 // provided token and optional userIP (which can be omitted from the request by
 // providing an empty string), and returns the response. To check whether the
 // token was actually valid, use the response's Verify method.
-func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, error) {
+func (c *client) Fetch(ctx context.Context, token, userIP string) (Response, error) {
 	values := url.Values{
 		"secret":   {c.secret},
 		"response": {token},
@@ -94,7 +99,7 @@ func (c *Client) Fetch(ctx context.Context, token, userIP string) (Response, err
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request = request.WithContext(ctx)
 
-	res, err := c.client.Do(request)
+	res, err := c.httpClient.Do(request)
 	if err != nil {
 		return Response{}, xerrors.Errorf("error making POST request: %w", err)
 	}

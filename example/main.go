@@ -23,7 +23,7 @@ var (
 	score     = flag.Float64("score", 0.5, "Minimum score threshold")
 	port      = flag.Int("port", 80, "Port to run example server on")
 
-	client *recaptcha.Client
+	client recaptcha.Client
 )
 
 func main() {

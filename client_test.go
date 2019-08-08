@@ -41,15 +41,15 @@ func TestNewClient(t *testing.T) {
 		name     string
 		secret   string
 		options  []Option
-		expected *Client
+		expected Client
 	}{
 		{
 			name:   "NoOptions",
 			secret: "secret",
-			expected: &Client{
-				secret: "secret",
-				url:    DefaultURL,
-				client: http.DefaultClient,
+			expected: &client{
+				secret:     "secret",
+				url:        DefaultURL,
+				httpClient: http.DefaultClient,
 			},
 		},
 		{
@@ -62,10 +62,10 @@ func TestNewClient(t *testing.T) {
 					},
 				}),
 			},
-			expected: &Client{
+			expected: &client{
 				secret: "secret",
 				url:    DefaultURL,
-				client: &http.Client{
+				httpClient: &http.Client{
 					Transport: &http.Transport{
 						MaxIdleConnsPerHost: 1,
 					},
@@ -78,10 +78,10 @@ func TestNewClient(t *testing.T) {
 			options: []Option{
 				SetURL("url"),
 			},
-			expected: &Client{
-				secret: "secret",
-				url:    "url",
-				client: http.DefaultClient,
+			expected: &client{
+				secret:     "secret",
+				url:        "url",
+				httpClient: http.DefaultClient,
 			},
 		},
 	}
@@ -99,7 +99,7 @@ func TestNewClient(t *testing.T) {
 func TestFetch(t *testing.T) {
 	testCases := []struct {
 		name     string
-		client   *Client
+		client   Client
 		token    string
 		userIP   string
 		expected Response
