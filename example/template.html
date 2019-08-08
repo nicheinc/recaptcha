@@ -12,7 +12,7 @@
     // Get Token click handler just gets a new token and displays it
     function onGetToken() {
       grecaptcha.ready(function() {
-          grecaptcha.execute("{{.SiteKey}}", {action: "{{.Action}}"}).then(function(token) {
+          grecaptcha.execute("{{.SiteKey}}", {action: "getToken"}).then(function(token) {
           document.getElementById("token-div").innerHTML = token;
         });
       });
@@ -21,7 +21,7 @@
     // Submit click handler gets a new token and submits it via a form
     function onSubmit() {
       grecaptcha.ready(function() {
-          grecaptcha.execute("{{.SiteKey}}", {action: "{{.Action}}"}).then(function(token) {
+          grecaptcha.execute("{{.SiteKey}}", {action: "submit"}).then(function(token) {
           document.getElementById("token-input").value = token;
           document.getElementById("form").submit();
         });

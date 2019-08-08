@@ -150,28 +150,34 @@ func (r *Response) Verify(criteria ...Criterion) error {
 type Criterion func(r *Response) error
 
 // Hostname is an optional verification criterion which ensures that the
-// hostname of the website where the reCAPTCHA was presented is the expected
-// one. Returns *InvalidHostnameError if the hostname is not correct.
-func Hostname(hostname string) Criterion {
+// hostname of the website where the reCAPTCHA was presented matches one of the
+// provided hostnames. Returns *InvalidHostnameError if the hostname is not
+// correct.
+func Hostname(hostnames ...string) Criterion {
 	return func(r *Response) error {
-		if r.Hostname != hostname {
-			return &InvalidHostnameError{
-				Hostname: r.Hostname,
+		for _, hostname := range hostnames {
+			if hostname == r.Hostname {
+				return nil
 			}
 		}
-		return nil
+		return &InvalidHostnameError{
+			Hostname: r.Hostname,
+		}
 	}
 }
 
 // Action is an optional verification criterion which ensures that the website
-// action associated with the reCAPTCHA is the expected one. Returns
-// *InvalidActionError if the action is not correct.
-func Action(action string) Criterion {
+// action associated with the reCAPTCHA matches one of the provided actions.
+// Returns *InvalidActionError if the action is not correct.
+func Action(actions ...string) Criterion {
 	return func(r *Response) error {
-		if r.Action != action {
-			return &InvalidActionError{
-				Action: r.Action,
+		for _, action := range actions {
+			if action == r.Action {
+				return nil
 			}
+		}
+		return &InvalidActionError{
+			Action: r.Action,
 		}
 		return nil
 	}

@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/nicheinc/recaptcha"
 )
@@ -17,9 +18,9 @@ import (
 var (
 	secretKey = flag.String("secret-key", "", "reCAPTCHA secret key")
 	siteKey   = flag.String("site-key", "", "reCAPTCHA site key")
-	hostname  = flag.String("hostname", "localhost", "expected hostname")
-	action    = flag.String("action", "example", "expected action")
-	score     = flag.Float64("score", 0.5, "minimum score threshold")
+	hostnames = flag.String("hostname", "localhost", "Valid hostnames (comma separated)")
+	actions   = flag.String("action", "submit", "Valid actions (comma separated)")
+	score     = flag.Float64("score", 0.5, "Minimum score threshold")
 	port      = flag.Int("port", 80, "Port to run example server on")
 
 	client *recaptcha.Client
@@ -39,13 +40,11 @@ func main() {
 
 type data struct {
 	SiteKey string
-	Action  string
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	data := data{
 		SiteKey: *siteKey,
-		Action:  *action,
 	}
 
 	tmpl, err := template.New("template.html").ParseFiles("./template.html")
@@ -109,8 +108,8 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	var message string
 	if err := response.Verify(
-		recaptcha.Hostname(*hostname),
-		recaptcha.Action(*action),
+		recaptcha.Hostname(strings.Split(*hostnames, ",")...),
+		recaptcha.Action(strings.Split(*actions, ",")...),
 		recaptcha.Score(*score),
 	); err != nil {
 		message = fmt.Sprintf("\n\nToken is invalid: %s", err)

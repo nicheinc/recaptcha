@@ -355,6 +355,21 @@ func TestVerify(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name: "Success/Hostname/Multiple",
+			response: Response{
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
+			},
+			criteria: []Criterion{
+				Hostname("nathanjcochran.com", "niche.com"),
+			},
+			expected: nil,
+		},
+		{
 			name: "Success/Action",
 			response: Response{
 				Success:     true,
@@ -366,6 +381,21 @@ func TestVerify(t *testing.T) {
 			},
 			criteria: []Criterion{
 				Action("login"),
+			},
+			expected: nil,
+		},
+		{
+			name: "Success/Action/Multiple",
+			response: Response{
+				Success:     true,
+				Score:       .5,
+				Action:      "login",
+				ChallengeTs: now().Add(-time.Second),
+				Hostname:    "niche.com",
+				ErrorCodes:  []string{},
+			},
+			criteria: []Criterion{
+				Action("register", "login"),
 			},
 			expected: nil,
 		},
