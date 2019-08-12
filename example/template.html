@@ -9,32 +9,31 @@
 <body>
   <script src="https://www.google.com/recaptcha/api.js?render={{.SiteKey}}"></script>
   <script>
-    // Get Token click handler just gets a new token and displays it
-    function onGetToken() {
+    // Gets a new token and displays it
+    function getToken() {
       grecaptcha.ready(function() {
           grecaptcha.execute("{{.SiteKey}}", {action: "{{.Action}}"}).then(function(token) {
-          document.getElementById("token-div").innerHTML = token;
+          document.getElementById("token-input").value = token;
         });
       });
     };
 
-    // Submit click handler gets a new token and submits it via a form
-    function onSubmit() {
-      grecaptcha.ready(function() {
-          grecaptcha.execute("{{.SiteKey}}", {action: "{{.Action}}"}).then(function(token) {
-          document.getElementById("token-input").value = token;
-          document.getElementById("form").submit();
-        });
-      });
+    // Copies value in token input field
+    function copyToken() {
+        var token = document.getElementById("token-input");
+        token.select();
+        document.execCommand("copy");
+        token.blur()
     };
   </script>
 
   <form id="form" action="/submit" method="POST">
-  <fieldset>
+  <fieldset style="display:inline-block">
     <legend>Example Form</legend>
-    <input type="hidden" id="token-input" name="token">
-    <button type="button" onclick="onGetToken()">Get Token</button>
-    <button type="button" onclick="onSubmit()">Submit</button>
+    <input type="text" id="token-input" name="token">
+    <button type="button" onclick="getToken()">Get Token</button>
+    <button type="button" onclick="copyToken()">Copy Token</button>
+    <button type="submit">Submit</button>
   </fieldset>
 </form>
 <div id="token-div"></div>
