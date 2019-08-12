@@ -19,7 +19,7 @@ var (
 	secretKey = flag.String("secret-key", "", "reCAPTCHA secret key")
 	siteKey   = flag.String("site-key", "", "reCAPTCHA site key")
 	hostnames = flag.String("hostname", "localhost", "Valid hostnames (comma separated)")
-	actions   = flag.String("action", "submit", "Valid actions (comma separated)")
+	action    = flag.String("action", "example", "Action to be associated with reCAPTCHA tokens")
 	score     = flag.Float64("score", 0.5, "Minimum score threshold")
 	port      = flag.Int("port", 80, "Port to run example server on")
 
@@ -40,11 +40,13 @@ func main() {
 
 type data struct {
 	SiteKey string
+	Action  string
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	data := data{
 		SiteKey: *siteKey,
+		Action:  *action,
 	}
 
 	tmpl, err := template.New("template.html").ParseFiles("./template.html")
@@ -109,7 +111,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	var message string
 	if err := response.Verify(
 		recaptcha.Hostname(strings.Split(*hostnames, ",")...),
-		recaptcha.Action(strings.Split(*actions, ",")...),
+		recaptcha.Action(*action),
 		recaptcha.Score(*score),
 	); err != nil {
 		message = fmt.Sprintf("\n\nToken is invalid: %s", err)
