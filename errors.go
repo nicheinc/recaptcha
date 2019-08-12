@@ -16,9 +16,9 @@ type VerificationError struct {
 
 func (e *VerificationError) Error() string {
 	if len(e.ErrorCodes) > 0 {
-		return fmt.Sprintf("failed verification: %s", strings.Join(e.ErrorCodes, ","))
+		return fmt.Sprintf("reCAPTCHA failed verification: %s", strings.Join(e.ErrorCodes, ","))
 	}
-	return "failed verification (success: false)"
+	return "reCAPTCHA failed verification (success: false)"
 }
 
 // InvalidHostnameError is returned from Verify if the Hostname criterion is
@@ -29,7 +29,7 @@ type InvalidHostnameError struct {
 }
 
 func (e *InvalidHostnameError) Error() string {
-	return fmt.Sprintf("failed verification: invalid hostname: %s", e.Hostname)
+	return fmt.Sprintf("reCAPTCHA failed verification: invalid hostname: %s", e.Hostname)
 }
 
 // InvalidActionError is returned from Verify if the Action criterion is
@@ -40,7 +40,7 @@ type InvalidActionError struct {
 }
 
 func (e *InvalidActionError) Error() string {
-	return fmt.Sprintf("failed verification: invalid action: %s", e.Action)
+	return fmt.Sprintf("reCAPTCHA failed verification: invalid action: %s", e.Action)
 }
 
 // InvalidScoreError is returned from Verify if the Score criterion is provided
@@ -50,7 +50,7 @@ type InvalidScoreError struct {
 }
 
 func (e *InvalidScoreError) Error() string {
-	return fmt.Sprintf("failed verification: invalid score: %f", e.Score)
+	return fmt.Sprintf("reCAPTCHA failed verification: invalid score: %f", e.Score)
 }
 
 // InvalidChallengeTsError is returned from Verify if the ChallengeTs criterion
@@ -61,5 +61,5 @@ type InvalidChallengeTsError struct {
 }
 
 func (e *InvalidChallengeTsError) Error() string {
-	return fmt.Sprintf("failed verification: invalid challenge timestamp: %s", e.ChallengeTs)
+	return fmt.Sprintf("reCAPTCHA failed verification: invalid challenge timestamp: %s", e.ChallengeTs)
 }
