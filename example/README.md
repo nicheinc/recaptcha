@@ -1,8 +1,11 @@
 # example
 
 Example application that shows how to use this library in conjunction with the
-client-side javascript library to verify reCAPTCHA v3 tokens. You must provide
-your secret key and site key, at a minimum, for this example to work.
+client-side javascript library to verify reCAPTCHA v3 tokens. Also useful for
+generating example tokens for testing purposes (in which case, you must access
+it via the correct domain, and use the `-action` flag to set the appropriate
+action). You must provide your secret key and site key, at a minimum, for this
+example to work.
 
 ## Usage
 
