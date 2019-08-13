@@ -1,5 +1,9 @@
 # recaptcha
 
+[![Build Status](https://travis-ci.com/nicheinc/recaptcha.svg?branch=master)](https://travis-ci.com/nicheinc/recaptcha)
+[![GoDoc](https://godoc.org/github.com/nicheinc/recaptcha?status.svg)](https://godoc.org/github.com/nicheinc/recaptcha) 
+[![license](https://img.shields.io/github/license/nicheinc/recaptcha.svg?maxAge=2592000)](LICENSE)
+
 A client library for contacting the [reCAPTCHA
 v3](https://developers.google.com/recaptcha/docs/v3) token [verification
 endpoint](https://developers.google.com/recaptcha/docs/verify) and validating
