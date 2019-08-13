@@ -9,9 +9,9 @@ This project is not associated with Google or the reCAPTCHA project.
 
 ## Usage
 
-See the [documentation](https://godoc.org/github.com/nicheinc/recaptcha) for
-more information, or see the [example](./example) directory for a complete
-working example.
+See [godoc](https://godoc.org/github.com/nicheinc/recaptcha) for more
+information, or see the [example](./example) directory for a complete working
+example.
 
 ```golang
 // Clients are threadsafe, and should normally be created once and reused
