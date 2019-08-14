@@ -22,6 +22,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// DefaultURL is the default reCAPTCHA verification endpoint URL. This can be
+// overridden via the SetURL option.
 const DefaultURL = "https://www.google.com/recaptcha/api/siteverify"
 
 // HTTPClient is a basic interface for an HTTP client, as required by the
@@ -63,10 +65,10 @@ func SetURL(url string) Option {
 	}
 }
 
-// Creates an instance of Client, which is thread-safe and should be reused
-// instead of created as needed. You must provided your website's secret key,
-// which is shared between your site and reCAPTCHA. Additional configuration
-// options may also be provided (e.g. SetHTTPClient, SetURL).
+// NewClient creates an instance of Client, which is thread-safe and should be
+// reused instead of created as needed. You must provided your website's secret
+// key, which is shared between your site and reCAPTCHA. Additional
+// configuration options may also be provided (e.g. SetHTTPClient, SetURL).
 func NewClient(secret string, opts ...Option) Client {
 	client := &client{
 		secret:     secret,
@@ -184,7 +186,6 @@ func Action(actions ...string) Criterion {
 		return &InvalidActionError{
 			Action: r.Action,
 		}
-		return nil
 	}
 }
 
