@@ -1,6 +1,7 @@
 # recaptcha
 
 [![Build Status](https://travis-ci.com/nicheinc/recaptcha.svg?branch=master)](https://travis-ci.com/nicheinc/recaptcha)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nicheinc/recaptcha)](https://goreportcard.com/report/github.com/nicheinc/recaptcha)
 [![GoDoc](https://godoc.org/github.com/nicheinc/recaptcha?status.svg)](https://godoc.org/github.com/nicheinc/recaptcha) 
 [![license](https://img.shields.io/github/license/nicheinc/recaptcha.svg?maxAge=2592000)](LICENSE)
 
