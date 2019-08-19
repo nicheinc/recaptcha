@@ -58,8 +58,9 @@ func (e *InvalidScoreError) Error() string {
 // window.
 type InvalidChallengeTsError struct {
 	ChallengeTs time.Time
+	Diff        time.Duration
 }
 
 func (e *InvalidChallengeTsError) Error() string {
-	return fmt.Sprintf("invalid reCAPTCHA: invalid challenge timestamp: %s", e.ChallengeTs)
+	return fmt.Sprintf("invalid reCAPTCHA: invalid challenge timestamp: %s (%s old)", e.ChallengeTs, e.Diff)
 }

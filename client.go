@@ -218,6 +218,7 @@ func ChallengeTs(window time.Duration) Criterion {
 		if diff := now().Sub(r.ChallengeTs); diff > window {
 			return &InvalidChallengeTsError{
 				ChallengeTs: r.ChallengeTs,
+				Diff:        diff,
 			}
 		}
 		return nil

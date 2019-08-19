@@ -325,6 +325,7 @@ func TestVerify(t *testing.T) {
 			},
 			expected: &InvalidChallengeTsError{
 				ChallengeTs: now().Add(-time.Second),
+				Diff:        time.Second,
 			},
 		},
 		{
