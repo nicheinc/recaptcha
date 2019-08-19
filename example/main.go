@@ -100,14 +100,6 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := w.Write(out); err != nil {
-		http.Error(w,
-			fmt.Sprintf("Error writing response: %s\n", err),
-			http.StatusInternalServerError,
-		)
-		return
-	}
-
 	var message string
 	if err := response.Verify(
 		recaptcha.Hostname(strings.Split(*hostnames, ",")...),
@@ -119,7 +111,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		message = fmt.Sprintf("\n\nToken is valid")
 	}
 
-	if _, err := io.WriteString(w, message); err != nil {
+	if _, err := io.WriteString(w, string(out)+message); err != nil {
 		http.Error(w,
 			fmt.Sprintf("Error writing response: %s\n", err),
 			http.StatusInternalServerError,
