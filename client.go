@@ -70,15 +70,15 @@ func SetURL(url string) Option {
 // key, which is shared between your site and reCAPTCHA. Additional
 // configuration options may also be provided (e.g. SetHTTPClient, SetURL).
 func NewClient(secret string, opts ...Option) Client {
-	client := &client{
+	c := &client{
 		secret:     secret,
 		url:        DefaultURL,
 		httpClient: http.DefaultClient,
 	}
 	for _, opt := range opts {
-		opt(client)
+		opt(c)
 	}
-	return client
+	return c
 }
 
 // Fetch makes a request to the reCAPTCHA verification endpoint using the
