@@ -2,13 +2,17 @@
 
 [![Build Status](https://travis-ci.com/nicheinc/recaptcha.svg?branch=master)](https://travis-ci.com/nicheinc/recaptcha)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nicheinc/recaptcha)](https://goreportcard.com/report/github.com/nicheinc/recaptcha)
-[![GoDoc](https://godoc.org/github.com/nicheinc/recaptcha?status.svg)](https://godoc.org/github.com/nicheinc/recaptcha) 
+[![GoDoc](https://godoc.org/github.com/nicheinc/recaptcha?status.svg)](https://godoc.org/github.com/nicheinc/recaptcha)
 [![license](https://img.shields.io/github/license/nicheinc/recaptcha.svg?maxAge=2592000)](LICENSE)
 
-A client library for contacting the [reCAPTCHA
-v3](https://developers.google.com/recaptcha/docs/v3) token [verification
-endpoint](https://developers.google.com/recaptcha/docs/verify) and validating
-the response.
+> [!NOTE]
+>
+> This module is no longer actively maintained.
+
+A client library for contacting the
+[reCAPTCHA v3](https://developers.google.com/recaptcha/docs/v3) token
+[verification endpoint](https://developers.google.com/recaptcha/docs/verify) and
+validating the response.
 
 This project is not associated with Google or the reCAPTCHA project.
 
@@ -48,15 +52,14 @@ if err := response.Verify(
 
 Copyright (c) 2019 Niche.com, Inc.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
